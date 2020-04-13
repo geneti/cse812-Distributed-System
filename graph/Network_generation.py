@@ -14,7 +14,7 @@ from node_distance import node_distance_function
 np.set_printoptions(threshold=sys.maxsize)
 random.seed(30)
 
-node_number = 1000
+node_number = 100
 link_prob = 0.3
 width = 500
 length = 500
@@ -72,7 +72,7 @@ connected_link_matrix = np.zeros((node_number, 2))
 
 for i in range(node_number):
     connected_link_matrix[i, 0] = i
-    link_number = sum(link_matrix[i*1000:(i+1)*1000, 4])
+    link_number = sum(link_matrix[i*node_number:(i+1)*node_number, 4])
     connected_link_matrix[i, 1] = link_number
 
 # print(connected_link_matrix[0:10, :])
