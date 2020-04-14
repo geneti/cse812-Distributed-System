@@ -17,3 +17,5 @@ class Link(object):
 		# link rank priority value, not order
 		self.rank = 0
 		self.distance = math.sqrt((self.node1.x_pos-self.node2.x_pos)**2 + (self.node1.y_pos-self.node2.y_pos)**2)
+		# score function for different frequencies of a link
+		self.score = np.zeros(12)

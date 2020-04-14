@@ -20,6 +20,7 @@ def main():
 	# generate nodes
 	Nodes = [Mesh_node.Node(gateway_prob, LM.iloc(i,0), LM.iloc(i,1), i) for i in range(len(LM))]
 	# calculate the interference range between nodes and generate links
+	# Note: link (a->b) and (b->a) cannot exist at the same time
 	Links = [];
 	for i in range(len(Nodes)-1):
 		for j in range(i+1, len(Nodes)):
@@ -68,7 +69,7 @@ def main():
 		return elem.rank
 	des_links_list = copy.deepcopy(Links)
 	des_links_list.sort(key = take_rank)
-	
+
 
 
 if __name__ = '__main__':
