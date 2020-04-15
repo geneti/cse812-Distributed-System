@@ -19,3 +19,17 @@ class Link(object):
 		self.distance = math.sqrt((self.node1.x_pos-self.node2.x_pos)**2 + (self.node1.y_pos-self.node2.y_pos)**2)
 		# score function for different frequencies of a link
 		self.score = np.zeros(12)
+
+	def set_channel(self, SD, SS, SE):
+		SD = self.normalize(SD)
+		SS = self.normalize(SS)
+		SE = self.normalize(SE)
+		self.score = np.sum([SD, SS, SE], axis=0)
+		self.channel = np.argmin(self.score)
+
+	@classmethod	
+	def normalize(self, v): 
+		norm = np.linalg.norm(v) 
+		if norm == 0: 
+			return v 
+		return v / norm

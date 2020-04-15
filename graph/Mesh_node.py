@@ -25,10 +25,11 @@ class Node(object):
 		self.Rx_th = 1
 		# judge the node is or not a gateway
 		self.is_gateway = np.random.binomial(1, gateway_prob)
-		# numbers of neighbour within interference range; elements are index not instance
-		self.neighbours = []
+		# out_neighbours mean those nodes can be covered by signals sent by current node
+		# in_neighbours mean current node can receive signal from other nodes
+		# elements are index not instance
+		self.out_neighbours = []
+		self.in_neighbours = []
 		# min hop count
 		self.min_hop_count = 1000
-		# transmit node interference range
-		self.Tranmit_IR = 
 

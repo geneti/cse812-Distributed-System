@@ -1,6 +1,15 @@
-# import numpy as np
+import pandas as pd
+import numpy as np
+import sys
+import matplotlib.pyplot as plt
 import math
 
-def node_distance_function(node1, node2, position_matrix):
-    dis = math.sqrt((position_matrix[node1, 1]-position_matrix[node2, 1])**2 + (position_matrix[node1, 2]-position_matrix[node2, 2])**2)
-    return dis
+import Mesh_node
+
+class Dis(object):
+	def __init__(self, node1, node2):
+		self.dis = math.sqrt((node1.x_pos-node2.x_pos)**2+(node1.y_pos-node2.y_pos)**2)
+
+	@classmethod
+	def cal_dis(self):
+		return self.dis
