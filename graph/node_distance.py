@@ -7,9 +7,10 @@ import math
 import Mesh_node
 
 class Dis(object):
-	def __init__(self, node1, node2):
-		self.dis = math.sqrt((node1.x_pos-node2.x_pos)**2+(node1.y_pos-node2.y_pos)**2)
+	def __init__(self):
+		self.dis
 
 	@classmethod
-	def cal_dis(self):
+	def cal_dis(self, node1, node2):
+		self.dis = math.sqrt((node1.x_pos-node2.x_pos)**2+(node1.y_pos-node2.y_pos)**2)
 		return self.dis

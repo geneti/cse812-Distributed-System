@@ -3,9 +3,10 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 import math
+import copy
 
-import Gaussian_2d, NodeDistribution, Mesh_node, Mesh_link， Node_distance
-
+import Gaussian_2d, NodeDistribution, Mesh_node, Mesh_link
+import Node_distance
 # hyper parameters
 Num = 100
 gateway_prob = 0.05
@@ -20,7 +21,7 @@ def main():
 	t = NodeDistribution.location_matrix(Num, 'Gaussian_2d')
 	LM = t.generate()
 	# generate nodes
-	Nodes = [Mesh_node.Node(gateway_prob, LM.iloc(i,0), LM.iloc(i,1), i) for i in range(len(LM))]
+	Nodes = [Mesh_node.Node(gateway_prob, LM.iloc[i,0], LM.iloc[i,1], i) for i in range(len(LM))]
 	# calculate the interference range between nodes and generate links
 	# Note: link (a->b) and (b->a) cannot exist at the same time
 	Links = [];
@@ -37,12 +38,13 @@ def main():
 				Links.append(Mesh_link.Link(Nodes[i], Nodes[j]))
 				Nodes[i].out_neighbours.append(j)
 				Nodes[j].in_neighbours.append(i)
+	print('link list generated')
 
 	# caculate minimum hop count for each node by BFS
 	for i in range(len(Nodes)):
-		mhc = 0
-		if Nodes[i].is_gateway() == 1:
-			Nodes[i].min_hop_count = 0
+		mhc = 1
+		if Nodes[i].is_gateway == 1:
+			Nodes[i].min_hop_count = mhc
 			continue
 		queue = []
 		vis = []
@@ -52,13 +54,14 @@ def main():
 			s = queue.pop(0)
 			mhc += 1
 			for j in Nodes[i].out_neighbours:
-				if Nodes[j].is_gateway() == 1:
+				if Nodes[j].is_gateway == 1:
 					break
 				if j in vis:
 					continue
 				queue.append(j)
 				vis.append(j)
 		Nodes[i].min_hop_count = mhc
+	print('minimum hop count calculated')
 
 	# calculate rank for each link
 	for i in range(len(Links)):
@@ -67,6 +70,7 @@ def main():
 		link_distance = Links[i].distance
 		Links[i].rank = link_neighbours * link_distance**2 * Links[i].node2.Rx_th / (link_min_hop_count * \
 						Links[i].node1.pt * Links[i].node1.gain * Links[i].node2.gain)
+	print('rank list generated')
 
 	# create deep copy of links list and sort in descending order by rank
 	def take_rank(elem):
@@ -99,7 +103,7 @@ def main():
 						SD[omega] += Prti / Prt * G[delta_omega]
 
 					# calculate how current link interferences other assigned links 
-					if node_q.index in node s.out_neighbours:
+					if node_q.index in node_s.out_neighbours:
 						Prtj = node_s.pt * node_s.gain * node_q.gain / D_sq**2
 						SS[omega] += pow(abs(Prtj / Prt - 1) * G[delta_omega], Minkowski)
 
@@ -110,13 +114,13 @@ def main():
 				for j in range(it+1, len(des_links_list)):
 					node_q = des_links_list[j].node2
 					D_sq = Node_distance.Dis.cal_dis(node_s, node_q)
-					if node_q.index in node s.out_neighbours:
+					if node_q.index in node_s.out_neighbours:
 						SE[omega] += node_q.gain/D_sq**2 * F[omega]
 
 		# call set_channel function
 		des_links_list[it].set_channel(SD, SS, SE)
-		
 
 
-if __name__ = '__main__':
+
+if __name__ == '__main__':
 	main()
