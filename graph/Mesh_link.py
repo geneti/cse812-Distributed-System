@@ -27,6 +27,10 @@ class Link(object):
 		self.score = np.sum([SD, SS, SE], axis=0)
 		self.channel = np.argmin(self.score)
 
+	def set_channel_base(self, SL):
+		self.score = SL
+		self.channel = np.argmin(self.score)
+
 	@classmethod	
 	def normalize(self, v): 
 		norm = np.linalg.norm(v) 

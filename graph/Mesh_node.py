@@ -21,7 +21,7 @@ class Node(object):
 		self.height = 1
 		# Carrier sense threshold
 		self.CS_th = 1
-		# Reciever threshold
+		# Receiver threshold
 		self.Rx_th = 1
 		# judge the node is or not a gateway
 		self.is_gateway = np.random.binomial(1, gateway_prob)
