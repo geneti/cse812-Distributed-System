@@ -45,18 +45,16 @@ def gen_conflict_graph(links, interference_range):
 
 
 def cal_fni(c_links, interference_range):
-    total_i = 0
     interf = 0
     for l in c_links:
-        total_i += (l.node1.busy_idle_ratio * l.node2.busy_idle_ratio *
-        (1 - l.distance / interference_range))
         diff = abs(l.node1.channel - l.node2.channel)
         if diff > 4:
             continue
         else:
             interf += (l.node1.busy_idle_ratio * l.node2.busy_idle_ratio *
-            (1 - l.distance / interference_range) * (1 - diff / 4))
+                (1 - l.distance / interference_range) * (1 - diff / 4))
 
+    total_i = len(c_links)
     if total_i == 0 and interf == 0:
         return 0
     else:
