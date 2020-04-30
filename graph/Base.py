@@ -73,6 +73,7 @@ def base_channel_assignment(Nodes, Links, C_Links, argv, fni_all=False):
 			if it != 0:
 				for j in range(it):
 					delta_omega = abs(omega - des_links_list[j].channel)
+					#print(delta_omega)
 					node_p = des_links_list[j].node1
 					node_q = des_links_list[j].node2
 					D_pt = node_distance.Dis.cal_dis(node_p, node_t)
@@ -101,12 +102,17 @@ def base_channel_assignment(Nodes, Links, C_Links, argv, fni_all=False):
 					# score the current possible channel
 					# assume the busy idle ratio for 2 links is the average
 					bil = (des_links_list[j].busy_idle_ratio + des_links_list[it].busy_idle_ratio)/2
+					IRange = interference_ceiling
 					if delta_omega < 5:
-						Score[omega] += 0
-					elif Min_dis <= NIR:
-						Score[omega] += NIR/Min_dis * bil
+						IRange += 0
+					elif Min_dis <= NIR and Min_dis != 0:
+						IRange += NIR/Min_dis * bil
 					else:
-						Score[omega] += interference_ceiling
+						IRange += interference_ceiling
+
+					if IRange > Min_dis:
+						Score[omega] += 1
+					print(Score)
 								
 
 		# call set_channel function
@@ -192,5 +198,5 @@ def test_base_method(argv):
 
 
 if __name__ == '__main__':
-	argv = main.parse_arguments([])
+	argv = main.parse_arguments("--plot sepcial n4 --use base". split())
 	test_base_method(argv)
