@@ -38,7 +38,6 @@ def parse_arguments(argv):
         argv.plot_steps = True
         argv.plot_performance = True
     if not argv.use_base and not argv.use_sfs:
-        argv.use_base = True
         argv.use_sfs = True
     utils.mkdir(argv.fig_root)
     return argv
