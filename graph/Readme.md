@@ -1,3 +1,8 @@
+Run the following command to install required module in your python 
+```bash
+python -m pip install -r .\requirements.txt
+```
+
 
 To get the graph analysis plots, run
 ```bash
