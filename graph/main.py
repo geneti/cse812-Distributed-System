@@ -25,6 +25,7 @@ def parse_arguments(argv):
     parser.add_argument("--plot_steps", action="store_true",    help="whether or not output is redirected",)
     parser.add_argument("--plot_performance", action="store_true",    help="whether or not output is redirected",)
     parser.add_argument("--use_base", action="store_true",    help="whether or not output is redirected",)
+    parser.add_argument("--use_sfs", action="store_true",    help="whether or not output is redirected",)
     parser.add_argument("--plot_special_n3", action="store_true",    help="whether or not output is redirected",)
     parser.add_argument("--plot_special_n4", action="store_true",    help="whether or not output is redirected",)
     # parser.add_argument("--is_disk_limited", action="store_true",    help="whether or not to limit chpkt saving",)
@@ -34,26 +35,32 @@ def parse_arguments(argv):
     if argv.plot_special_n3 or argv.plot_special_n4:
         argv.plot_steps = True
         argv.plot_performance = True
+    if not argv.use_base and not argv.use_sfs:
+        argv.use_base = True
+        argv.use_sfs = True
     utils.mkdir(argv.fig_root)
     return argv
 
 
 def main(argv):
     if argv.plot_graph_analysis:
+        print("Plotting graph analysis")
         plot_avg_deg.plot_avg_deg(argv)
     elif argv.plot_performance:
         if argv.use_base:
+            print("Plotting performance using base method")
             Base.test_base_method(argv)
-        else:
+        if argv.use_sfs:
+            print("Plotting performance using sfs method")
             Mesh_network.test_our_method(argv)
 
     print()
 
 if __name__ == "__main__":
-    argv = parse_arguments("--plot_graph_analysis".split())
-    argv = parse_arguments("--plot_special_n3".split())
-    argv = parse_arguments("--plot_special_n4".split())
-    argv = parse_arguments("--plot_performance --use_base --min_node 100 --max_node 100".split())
+    # argv = parse_arguments("--plot_graph_analysis".split())
+    # argv = parse_arguments("--plot_special_n3".split())
+    argv = parse_arguments("--plot_special_n4 --use_base".split())
+    # argv = parse_arguments("--plot_performance --use_base --min_node 100 --max_node 100".split())
     # argv = parse_arguments(sys.argv[1:])
-    print(argv)
+    print(f"Parameters: {argv}\n")
     main(argv)
