@@ -1,8 +1,10 @@
+import os
 import sys
 import argparse
 
 import plot_avg_deg
 import Mesh_network
+import matplotlib.pyplot as plt
 import Base
 import utils
 
@@ -49,18 +51,34 @@ def main(argv):
     elif argv.plot_performance:
         if argv.use_base:
             print("Plotting performance using base method")
-            Base.test_base_method(argv)
+            Ns_base, fni_list_base, xlabel_base, ylabel_base, fig_name_base = Base.test_base_method(argv)
+
         if argv.use_sfs:
             print("Plotting performance using sfs method")
-            Mesh_network.test_our_method(argv)
+            Ns_sfs, fni_list_sfs, xlabel_sfs, ylabel_sfs, fig_name_sfs = Mesh_network.test_our_method(argv)
 
-    print()
+        if not argv.plot_special_n3 and not argv.plot_special_n4:
+            fig, ax = plt.subplots()
+            if argv.use_base:
+                ax.plot(Ns_base, fni_list_base, "-", label='Base Method')
+            if argv.use_sfs:
+                ax.plot(Ns_sfs, fni_list_sfs, '-', label='SFS Method')
+            ax.set_xlabel(xlabel_sfs)
+            ax.set_ylabel(ylabel_sfs)
+            # ax.set_yscale('log')
+            lgd = ax.legend(loc='upper right')
+            fig_path = os.path.join(argv.fig_root, f"total_{fig_name_sfs}")
+
+            print(f'Saving to {fig_path}')
+            plt.savefig(fig_path, format='png', bbox_extra_artists=(lgd,), bbox_inches='tight')
+
+        print()
 
 if __name__ == "__main__":
     # argv = parse_arguments("--plot_graph_analysis".split())
     # argv = parse_arguments("--plot_special_n3".split())
-    argv = parse_arguments("--plot_special_n4 --use_base".split())
-    # argv = parse_arguments("--plot_performance --use_base --min_node 100 --max_node 100".split())
-    # argv = parse_arguments(sys.argv[1:])
+    # argv = parse_arguments("--plot_special_n4 --use_base".split())
+    # argv = parse_arguments("--plot_performance --min_node 100 --max_node 100".split())
+    argv = parse_arguments(sys.argv[1:])
     print(f"Parameters: {argv}\n")
     main(argv)

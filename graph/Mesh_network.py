@@ -50,7 +50,7 @@ def SFS_channel_assignment(Nodes, Links, C_Links, argv, fni_all=False):
 		link_min_hop_count = min(Links[i].node1.min_hop_count, Links[i].node2.min_hop_count)
 		link_distance = Links[i].distance
 		Links[i].rank = link_neighbours * link_distance**2 * Links[i].node2.Rx_th / (link_min_hop_count * \
-						Links[i].node1.pt * Links[i].node1.gain * Links[i].node2.gain)
+			Links[i].node1.pt * Links[i].node1.gain * Links[i].node2.gain)
 	print('rank list generated')
 
 	# create deep copy of links list and sort in descending order by rank
@@ -70,7 +70,7 @@ def SFS_channel_assignment(Nodes, Links, C_Links, argv, fni_all=False):
 		SD = np.zeros(12)
 		SS = np.zeros(12)
 		SE = np.zeros(12)
-		
+
 		node_s = des_links_list[it].node1
 		node_t = des_links_list[it].node2
 		D_st = node_distance.Dis.cal_dis(node_s, node_t)
@@ -159,27 +159,35 @@ def test_our_method(argv):
 		else:
 			fni_list_local = SFS_channel_assignment(Nodes, Links, C_Links, argv)
 			fni_list.append(fni_list_local[-1])
+			
+	xlabel = None
+	ylabel = None
+	fig_name = None
+	if not argv.plot_special_n3 and not argv.plot_special_n4:
+		fig, ax = plt.subplots()
 
-	fig, ax = plt.subplots()
-
-	if len(Ns) == 1:
-		ax.plot(list(range(1, len(Links) + 1)), fni_list)
-
-		ax.set_xlabel('Number of Links with channel assigned')
-		ax.set_ylabel('Frictional Network Interference')
-		# ax.set_yscale('log')
-		fig_path = os.path.join(argv.fig_root, "fni_nlink.png")
-	else:
+		if len(Ns) == 1:
+			Ns = list(range(1, len(Links) + 1))
+			xlabel = 'Number of Links with channel assigned'
+			ylabel = 'Frictional Network Interference'
+			fig_name = "fni_nlink.png"
+		else:
+			xlabel = 'Number of Nodes'
+			ylabel = 'Frictional Network Interference'
+			fig_name = "fni_n.png"
 		ax.plot(Ns, fni_list)
 
-		ax.set_xlabel('Number of Nodes')
-		ax.set_ylabel('Frictional Network Interference')
+		ax.set_xlabel(xlabel)
+		ax.set_ylabel(ylabel)
 		# ax.set_yscale('log')
-		fig_path = os.path.join(argv.fig_root, "fni_n.png")
+		fig_path = os.path.join(argv.fig_root, fig_name)
 
-	print(f'Saving to {fig_path}')
-	plt.savefig(fig_path, format='png', bbox_inches='tight')
-	print()
+		print(f'Saving to {fig_path}')
+		plt.savefig(fig_path, format='png', bbox_inches='tight')
+		print()
+
+	return Ns, fni_list, xlabel, ylabel, fig_name
+
 
 
 if __name__ == '__main__':
