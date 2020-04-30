@@ -104,16 +104,15 @@ def base_channel_assignment(Nodes, Links, C_Links, argv, fni_all=False):
 					bil = (des_links_list[j].busy_idle_ratio + des_links_list[it].busy_idle_ratio)/2
 					IRange = interference_ceiling
 					if delta_omega < 5:
-						IRange += 0
+						IRange = interference_ceiling
 					elif Min_dis <= NIR and Min_dis != 0:
-						IRange += NIR/Min_dis * bil
-
+						IRange = NIR/Min_dis * bil
 					else:
-						IRange += interference_ceiling
+						IRange = 0
 
 					if IRange > Min_dis:
 						Score[omega] += 1
-					print(Score)
+		print(Score)
 								
 
 
