@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import numpy as np
 import sys
@@ -6,40 +7,20 @@ import math
 import copy
 
 import Gaussian_2d, NodeDistribution, Mesh_node, Mesh_link
-import Node_distance
+import node_distance
+import utils
+import main
+import plot_graph
+
 # hyper parameters
-Num = 100
-gateway_prob = 0.05
-path_loss = 1
 # links interference range list from 0 to 11
-G = [2, 1.125, 0.75, 0.375, 0.125, 0,0,0,0,0,0,0]
-F = [0,0,0.0009,0.0175,0.1295,0.3521,0.3521,0.1295,0.0175,0.0009,0,0]
+G = [2, 1.125, 0.75, 0.375, 0.125, 0, 0, 0, 0, 0, 0, 0]
+F = [0, 0, 0.0009, 0.0175, 0.1295, 0.3521, 0.3521, 0.1295, 0.0175, 0.0009, 0, 0]
 Minkowski = 2
 
-def main():
-	# generate location matrix
-	t = NodeDistribution.location_matrix(Num, 'Gaussian_2d')
-	LM = t.generate()
-	# generate nodes
-	Nodes = [Mesh_node.Node(gateway_prob, LM.iloc[i,0], LM.iloc[i,1], i) for i in range(len(LM))]
-	# calculate the interference range between nodes and generate links
-	# Note: link (a->b) and (b->a) cannot exist at the same time
-	Links = [];
-	for i in range(len(Nodes)):
-		for j in range(len(Nodes)):
-			if i == j:
-				continue
-			dis = Node_distance.Dis.cal_dis(Nodes[i], Nodes[j])
-			#dis = math.sqrt((Nodes[i].x_pos - Nodes[j].x_pos)**2+(Nodes[i].y_pos - Nodes[j].y_pos)**2)
-			# node interference range
-			node_ir = math.sqrt(Nodes[i].pt * Nodes[i].gain * Nodes[j].gain * Nodes[i].height**2\
-								 * Nodes[j].height**2 / Nodes[j].CS_th) * path_loss
-			if node_ir >= dis:
-				Links.append(Mesh_link.Link(Nodes[i], Nodes[j]))
-				Nodes[i].out_neighbours.append(j)
-				Nodes[j].in_neighbours.append(i)
-	print('link list generated')
 
+def SFS_channel_assignment(Nodes, Links, C_Links, argv, fni_all=False):
+	fni_list = []
 	# caculate minimum hop count for each node by BFS
 	for i in range(len(Nodes)):
 		mhc = 1
@@ -76,51 +57,131 @@ def main():
 	def take_rank(elem):
 		# elem is a link object
 		return elem.rank
-	des_links_list = copy.deepcopy(Links)
-	des_links_list.sort(key = take_rank)
+
+	des_links_list = Links
+	des_links_list.sort(key=take_rank)
+
+	if argv.plot_steps:
+		link_ranks = [l.rank for l in Links]
+		print(link_ranks)
 
 	for it in range(len(des_links_list)):
+		print(f"\r\t[{it+1}/{len(des_links_list)}]", end='')
 		SD = np.zeros(12)
 		SS = np.zeros(12)
 		SE = np.zeros(12)
 		
 		node_s = des_links_list[it].node1
 		node_t = des_links_list[it].node2
-		D_st = Node_distance.Dis.cal_dis(node_s, node_t)
-		Prt  = node_s.pt * node_s.gain * node_t.gain / D_st**2
+		D_st = node_distance.Dis.cal_dis(node_s, node_t)
+		Prt = node_s.pt * node_s.gain * node_t.gain / D_st**2
 		# calculate SD, SS, SE score function
 		for omega in range(12):
 			if it != 0:
 				for j in range(it):
-					delta_omega = abs(omega - des_links_list[j].channel)
+					if des_links_list[j].channel == 0:
+						delta_omega = abs(omega - des_links_list[j].channel)
+					else:
+						delta_omega = abs(omega - des_links_list[j].channel + 1)
 					node_p = des_links_list[j].node1
 					node_q = des_links_list[j].node2
-					D_pt = Node_distance.Dis.cal_dis(node_p, node_t)
-					D_sq = Node_distance.Dis.cal_dis(node_s, node_q)
+					D_pt = node_distance.Dis.cal_dis(node_p, node_t)
+					D_sq = node_distance.Dis.cal_dis(node_s, node_q)
 					# claculate how current link interferenced by other links
 					if node_p.index in node_t.in_neighbours:
 						Prti = node_p.pt * node_p.gain * node_t.gain / D_pt**2
 						SD[omega] += Prti / Prt * G[delta_omega]
 
-					# calculate how current link interferences other assigned links 
+					# calculate how current link interferences other assigned links
 					if node_q.index in node_s.out_neighbours:
 						Prtj = node_s.pt * node_s.gain * node_q.gain / D_sq**2
-						SS[omega] += pow(abs(Prtj / Prt - 1) * G[delta_omega], Minkowski)
+						SS[omega] += pow(
+						abs(Prtj / Prt - 1) * G[delta_omega],
+						Minkowski)
 
-				SS = [x**(1/Minkowski) for x in SS]
+				SS = [x**(1 / Minkowski) for x in SS]
 
-			# calculate how current link interferences other unassigned links 
-			if it != len(des_links_list)-1:
-				for j in range(it+1, len(des_links_list)):
+			# calculate how current link interferences other unassigned links
+			if it != len(des_links_list) - 1:
+				for j in range(it + 1, len(des_links_list)):
 					node_q = des_links_list[j].node2
-					D_sq = Node_distance.Dis.cal_dis(node_s, node_q)
+					D_sq = node_distance.Dis.cal_dis(node_s, node_q)
 					if node_q.index in node_s.out_neighbours:
-						SE[omega] += node_q.gain/D_sq**2 * F[omega]
+						SE[omega] += node_q.gain / D_sq**2 * F[omega]
 
 		# call set_channel function
 		des_links_list[it].set_channel(SD, SS, SE)
 
+		if argv.plot_steps:
+			fig_path = os.path.join(argv.fig_root, f"n{len(Nodes)}", f"step_{it:04d}.png")
+			plot_graph.plot_graph(Nodes, Links, fig_path=fig_path)
+			print(f'Saving to {fig_path} ')
+
+		if fni_all:
+			fni = utils.cal_fni(C_Links, argv.inter_range)
+			fni_list.append(fni)
+
+	if len(fni_list) == 0:
+		fni = utils.cal_fni(C_Links, argv.inter_range)
+		fni_list.append(fni)
+		print()
+
+	return fni_list
+
+def test_our_method(argv):
+	Ns = list(range(argv.min_node, argv.max_node + 1))
+	fni_list = []
+
+	if argv.plot_special_n3 or argv.plot_special_n4:
+		Ns = [0]
+	elif argv.plot_steps and len(Ns) > 1:
+		raise Exception("min_node and max_node should equal if you want to plot steps")
+
+	for num in Ns:
+		# generate graph
+		# generate location matrix
+		if argv.plot_special_n3:
+			LM = pd.DataFrame([[20, 20], [20, 10], [10, 20]])
+		elif argv.plot_special_n4:
+			LM = pd.DataFrame([[20, 20], [20, 10], [10, 20], [10, 10]])
+		else:
+			t = NodeDistribution.location_matrix(argv.width, argv.height, num, 'Random')
+			LM = t.generate()
+		# LM = pd.DataFrame([[20, 20], [20, 10], [10, 20], [10, 10]])
+		Nodes, Links = utils.gen_graph(LM, argv.gateway_prob, argv.path_loss)
+
+		print(f"Processing {len(Nodes)} nodes")
+		C_Links = utils.gen_conflict_graph(Links, argv.inter_range)
+		print('link list generated')
+
+		if len(Ns) == 1:
+			fni_list = SFS_channel_assignment(Nodes, Links, C_Links, argv, fni_all=True)
+		else:
+			fni_list_local = SFS_channel_assignment(Nodes, Links, C_Links, argv)
+			fni_list.append(fni_list_local[-1])
+
+	fig, ax = plt.subplots()
+
+	if len(Ns) == 1:
+		ax.plot(list(range(1, len(Links) + 1)), fni_list)
+
+		ax.set_xlabel('Number of Links with channel assigned')
+		ax.set_ylabel('Frictional Network Interference')
+		# ax.set_yscale('log')
+		fig_path = os.path.join(argv.fig_root, "fni_nlink.png")
+	else:
+		ax.plot(Ns, fni_list)
+
+		ax.set_xlabel('Number of Nodes')
+		ax.set_ylabel('Frictional Network Interference')
+		# ax.set_yscale('log')
+		fig_path = os.path.join(argv.fig_root, "fni_n.png")
+
+	print(f'Saving to {fig_path}')
+	plt.savefig(fig_path, format='png', bbox_inches='tight')
+	print()
 
 
 if __name__ == '__main__':
-	main()
+	argv = main.parse_arguments([])
+	test_our_method(argv)
